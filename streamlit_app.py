@@ -45,7 +45,7 @@ def calculate_dca(asset, ticker, data, amount, frequency, start_date, end_date):
     # Resample based on frequency
     # if frequency == "Daily":
         # df_resampled = df
-    elif frequency == "Weekly":
+    if frequency == "Weekly":
         df_resampled = df.resample('W-MON').mean()
     else:  # Monthly
         df_resampled = df.resample('M').mean()
@@ -71,7 +71,7 @@ def calculate_dca(asset, ticker, data, amount, frequency, start_date, end_date):
     return df_resampled
 
 def main():
-    st.title("Dollar Cost Averaging Comparison Tool")
+    st.title("DCA Comparison Tool")
     
     # Sidebar configuration
     st.sidebar.header("DCA Parameters")
@@ -150,13 +150,40 @@ def main():
                             customdata=df['Cumulative_Shares']
                         )
                     )
-                
+                 # Update layout with larger fonts and size
                 fig.update_layout(
-                    title=f"DCA Comparison ({frequency} ${investment_amount} investments)",
-                    xaxis_title="Date",
-                    yaxis_title="Value ($)",
-                    legend_title="Assets",
-                    hovermode="x unified"
+                    title=dict(
+                        text=f"DCA Comparison ({frequency} ${investment_amount} investments)",
+                        font=dict(size=24)  # Larger title font
+                    ),
+                    xaxis_title=dict(
+                        text="Date",
+                        font=dict(size=18)  # Larger x-axis title
+                    ),
+                    yaxis_title=dict(
+                        text="Value ($)",
+                        font=dict(size=18)  # Larger y-axis title
+                    ),
+                    legend_title=dict(
+                        text="Assets",
+                        font=dict(size=16)  # Larger legend title
+                    ),
+                    legend=dict(
+                        font=dict(size=14)  # Larger legend items
+                    ),
+                    hovermode="x unified",
+                    width=1000,  # Wider plot
+                    height=600,  # Taller plot
+                    font=dict(size=14),  # Base font size for other text
+                    hoverlabel=dict(font_size=14)  # Larger hover text
+                )
+                
+                # Update axes with larger tick fonts
+                fig.update_xaxes(
+                    tickfont=dict(size=14)
+                )
+                fig.update_yaxes(
+                    tickfont=dict(size=14)
                 )
                 
                 st.plotly_chart(fig, use_container_width=True)
