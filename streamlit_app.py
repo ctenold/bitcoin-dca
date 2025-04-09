@@ -232,7 +232,7 @@ def main():
             x_profile_url = "https://x.com/coletenold"
 
             # Display a button that links to your X profile
-            st.link_button("Visit my X Profile", x_profile_url)
+            st.link_button("Follow me on X", x_profile_url)
 
 if __name__ == "__main__":
     main()
