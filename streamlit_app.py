@@ -129,7 +129,7 @@ def main():
                     ticker = ASSET_MAPPINGS[asset]
                     results[asset] = calculate_dca(
                         asset, ticker, data, investment_amount, 
-                        frequency, start робота_date, end_date
+                        frequency, start_date, end_date
                     )
                 
                 # Create visualization
