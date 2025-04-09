@@ -144,4 +144,52 @@ def main():
                             name=f"{asset} Value",
                             hovertemplate=
                             '<b>%{x}</b><br>' +
-                            f'{asset}
+                            f'{asset} Value: $%{{y:.2f}}<br>' +
+                            'Shares: %{customdata:.4f}<br>',
+                            customdata=df['Cumulative_Shares']
+                        )
+                    )
+                    fig.add_trace(
+                        go.Scatter(
+                            x=df.index,
+                            y=df['Total_Invested'],
+                            name=f"{asset} Invested",
+                            line=dict(dash='dash'),
+                            opacity=0.5
+                        )
+                    )
+                
+                fig.update_layout(
+                    title=f"DCA Comparison ({frequency} ${investment_amount} investments)",
+                    xaxis_title="Date",
+                    yaxis_title="Value ($)",
+                    legend_title="Assets",
+                    hovermode="x unified"
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+                
+                # Display summary statistics
+                st.subheader("Summary Statistics")
+                summary_data = {}
+                for asset, df in results.items():
+                    final_value = df['Portfolio_Value'].iloc[-1]
+                    total_invested = df['Total_Invested'].iloc[-1]
+                    summary_data[asset] = {
+                        'Final Value': final_value,
+                        'Total Invested': total_invested,
+                        'Gain': final_value - total_invested,
+                        'ROI (%)': ((final_value / total_invested) - 1) * 100
+                    }
+                
+                st.dataframe(
+                    pd.DataFrame(summary_data).T.style.format({
+                        'Final Value': '${:,.2f}',
+                        'Total Invested': '${:,.2f}',
+                        'Gain': '${:,.2f}',
+                        'ROI (%)': '{:.2f}%'
+                    })
+                )
+
+if __name__ == "__main__":
+    main()
