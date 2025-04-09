@@ -76,7 +76,7 @@ def calculate_dca(asset, ticker, data, amount, frequency, start_date, end_date):
     return df_resampled
 
 def main():
-    st.title("Dollar Cost Averaging Comparison Tool")
+    st.title("DCA Comparison Tool")
     
     # Sidebar configuration
     st.sidebar.header("DCA Parameters")
@@ -183,6 +183,17 @@ def main():
             
             fig.update_xaxes(tickfont=dict(size=14))
             fig.update_yaxes(tickfont=dict(size=14))
+            fig.update_layout(
+                legend=dict(
+                    x=0.01,
+                    y=0.99,
+                    xanchor='left',
+                    yanchor='top',
+                    bgcolor='rgba(0,0,0,0)',  # transparent background
+                    bordercolor='rgba(255,255,255,0.2)',
+                    borderwidth=1
+                )
+            )
             
             st.plotly_chart(fig, use_container_width=False)
             
