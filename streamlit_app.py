@@ -35,27 +35,43 @@ def calculate_dca(asset, ticker, data, amount, frequency, start_date, end_date):
     end_date = end_date.replace(tzinfo=tz)
     
     if ticker == "USD":
-        dates = pd.date_range(start=start_date, end=end_date, freq='D', tz=tz)
+        # For cash, create dates based on frequency directly
+        if frequency == "Daily":
+            dates = pd.date_range(start=start_date, end=end_date, freq='D', tz=tz)
+        elif frequency == "Weekly":
+            dates = pd.date_range(start=start_date, end=end_date, freq='W-MON', tz=tz)
+        else:  # Monthly
+            dates = pd.date_range(start=start_date, end=end_date, freq='M', tz=tz)
         df = pd.DataFrame(index=dates)
         df['USD'] = 1.0
     else:
         df = data[[ticker]].copy()
     
-    if frequency == "Daily":
-        df_resampled = df
-    elif frequency == "Weekly":
-        df_resampled = df.resample('W-MON').mean()
-    else:  # Monthly
-        df_resampled = df.resample('M').mean()
+    # Resample based on frequency (for non-cash assets)
+    if ticker != "USD":
+        if frequency == "Weekly":
+            df_resampled = df.resample('W-MON').mean()
+        else:  # Monthly
+            df_resampled = df.resample('M').mean()
+    else:
+        df_resampled = df  # For cash, use the directly created dates
     
+    # Calculate shares bought and total investment
     df_resampled['Shares'] = amount / df_resampled[ticker]
     df_resampled['Cumulative_Shares'] = df_resampled['Shares'].cumsum()
     
-    time_deltas = (df_resampled.index - start_date).days
-    if frequency == "Weekly":
-        df_resampled['Total_Invested'] = amount * (time_deltas // 7)
-    else:  # Monthly
-        df_resampled['Total_Invested'] = amount * (time_deltas // 30)
+    # For cash, Total_Invested should exactly match the number of periods * amount
+    if ticker == "USD":
+        df_resampled['Total_Invested'] = amount * (df_resampled.index - df_resampled.index[0]).days
+        df_resampled['Total_Invested'] = amount * range(1, len(df_resampled) + 1)
+    else:
+        time_deltas = (df_resampled.index - start_date).days
+        if frequency == "Daily":
+            df_resampled['Total_Invested'] = amount * time_deltas
+        elif frequency == "Weekly":
+            df_resampled['Total_Invested'] = amount * (time_deltas // 7)
+        else:  # Monthly
+            df_resampled['Total_Invested'] = amount * (time_deltas // 30)
     
     df_resampled['Portfolio_Value'] = (
         df_resampled['Cumulative_Shares'] if ticker == "USD" 
@@ -65,7 +81,7 @@ def calculate_dca(asset, ticker, data, amount, frequency, start_date, end_date):
     return df_resampled
 
 def main():
-    st.title("Dollar Cost Averaging Comparison Tool")
+    st.title("DCA Comparison Tool")
     
     # Sidebar configuration
     st.sidebar.header("DCA Parameters")
@@ -142,6 +158,15 @@ def main():
                         line=dict(width=3)
                     )
                 )
+                fig.add_trace(
+                    go.Scatter(
+                        x=df.index,
+                        y=df['Total_Invested'],
+                        name=f"{asset} Invested",
+                        line=dict(dash='dash', width=3),
+                        opacity=0.5
+                    )
+                )
             
             fig.update_layout(
                 title=dict(
@@ -185,7 +210,7 @@ def main():
                     'Final Value': final_value,
                     'Total Invested': total_invested,
                     'Gain': final_value - total_invested,
-                    'ROI (%)': ((final_value / total_invested) - 1) * 100
+                    'ROI (%)': ((final_value / total_invested) - 1) * 100 if ticker != "USD" else 0.0
                 }
             
             st.dataframe(
