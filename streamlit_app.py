@@ -176,7 +176,7 @@ def main():
                     y=0.99,
                     xanchor='left',
                     yanchor='top',
-                    bgcolor='rgba(0,0,0,0)',  # transparent background
+                    #bgcolor='rgba(0,0,0,0)',  # transparent background
                     bordercolor='rgba(255,255,255,0.2)',
                     borderwidth=1,
                     font=dict(size=14)
