@@ -41,9 +41,8 @@ def calculate_dca(asset, ticker, data, amount, frequency, start_date, end_date):
     else:
         df = data[[ticker]].copy()
     
-    if frequency == "Daily":
-        df_resampled = df
-    elif frequency == "Weekly":
+
+    if frequency == "Weekly":
         df_resampled = df.resample('W-MON').mean()
     else:  # Monthly
         df_resampled = df.resample('M').mean()
@@ -58,7 +57,7 @@ def calculate_dca(asset, ticker, data, amount, frequency, start_date, end_date):
         df_resampled['Total_Invested'] = amount * (time_deltas // 30)
     
     df_resampled['Portfolio_Value'] = (
-        df_resampled['Cumulative_Shares'] if ticker == "USD" 
+        df_resampled['Total_Invested'] if ticker == "USD" 
         else df_resampled['Cumulative_Shares'] * df_resampled[ticker]
     )
     
