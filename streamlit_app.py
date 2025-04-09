@@ -142,20 +142,12 @@ def main():
                             x=df.index,
                             y=df['Portfolio_Value'],
                             name=f"{asset} Value",
+                            mode='lines'
                             hovertemplate=
                             '<b>%{x}</b><br>' +
                             f'{asset} Value: $%{{y:.2f}}<br>' +
                             'Shares: %{customdata:.4f}<br>',
                             customdata=df['Cumulative_Shares']
-                        )
-                    )
-                    fig.add_trace(
-                        go.Scatter(
-                            x=df.index,
-                            y=df['Total_Invested'],
-                            name=f"{asset} Invested",
-                            line=dict(dash='dash'),
-                            opacity=0.5
                         )
                     )
                 
