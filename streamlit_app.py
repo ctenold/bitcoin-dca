@@ -4,6 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import pytz
+import numpy as np
 
 # Asset mappings to their respective tickers
 ASSET_MAPPINGS = {
@@ -49,12 +50,14 @@ def calculate_dca(asset, ticker, data, amount, frequency, start_date, end_date):
     
     # Resample based on frequency (for non-cash assets)
     if ticker != "USD":
-        if frequency == "Weekly":
+        if frequency == "Daily":
+            df_resampled = df
+        elif frequency == "Weekly":
             df_resampled = df.resample('W-MON').mean()
         else:  # Monthly
             df_resampled = df.resample('M').mean()
     else:
-        df_resampled = df  # For cash, use the directly created dates
+        df_resampled = df
     
     # Calculate shares bought and total investment
     df_resampled['Shares'] = amount / df_resampled[ticker]
@@ -62,13 +65,12 @@ def calculate_dca(asset, ticker, data, amount, frequency, start_date, end_date):
     
     # For cash, Total_Invested should exactly match the number of periods * amount
     if ticker == "USD":
-        df_resampled['Total_Invested'] = amount * (df_resampled.index - df_resampled.index[0]).days
-        df_resampled['Total_Invested'] = amount * range(1, len(df_resampled) + 1)
+        # Use the length of the DataFrame to determine number of periods
+        periods = np.arange(1, len(df_resampled) + 1)
+        df_resampled['Total_Invested'] = amount * periods
     else:
         time_deltas = (df_resampled.index - start_date).days
-        if frequency == "Daily":
-            df_resampled['Total_Invested'] = amount * time_deltas
-        elif frequency == "Weekly":
+        if frequency == "Weekly":
             df_resampled['Total_Invested'] = amount * (time_deltas // 7)
         else:  # Monthly
             df_resampled['Total_Invested'] = amount * (time_deltas // 30)
@@ -204,6 +206,7 @@ def main():
             st.subheader("Summary Statistics")
             summary_data = {}
             for asset, df in results.items():
+                ticker = ASSET_MAPPINGS[asset]
                 final_value = df['Portfolio_Value'].iloc[-1]
                 total_invested = df['Total_Invested'].iloc[-1]
                 summary_data[asset] = {
