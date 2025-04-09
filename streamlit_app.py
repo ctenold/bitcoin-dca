@@ -13,18 +13,17 @@ ASSET_MAPPINGS = {
     "Gold": "GC=F",
     "Cash": "USD",
     # Indian Stock Market
-    "NIFTY 50": "^NSEI",  # Primary index for the National Stock Exchange of India
+    # "NIFTY 50": "^NSEI",  # Primary index for the National Stock Exchange of India
     # Canada
-    "S&P/TSX Composite": "^GSPTSE",  # Main index for the Toronto Stock Exchange
+    # "S&P/TSX Composite": "^GSPTSE",  # Main index for the Toronto Stock Exchange
     # Hong Kong
-    "Hang Seng Index": "^HSI",  # Key index for the Hong Kong Stock Exchange
+    # "Hang Seng Index": "^HSI",  # Key index for the Hong Kong Stock Exchange
     # China
-    "Shanghai Composite": "^SSEC",  # Main index for the Shanghai Stock Exchange
+    # "MSCI China": "MCHI",  
     # Korea
-    "KOSPI": "^KS11",  # Korea Composite Stock Price Index
+    # "KOSPI": "^KS11",  # Korea Composite Stock Price Index
     # US (Russell)
-    "Russell 2000": "^RUT",  # Small-cap index (direct index ticker)
-    "Russell 1000": "^RUI"  # Large-cap index (direct index ticker)
+    "Russell 3000": "^RUA"
 }
 
 def fetch_stock_data(tickers, start_date, end_date):
