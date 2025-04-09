@@ -43,8 +43,8 @@ def calculate_dca(asset, ticker, data, amount, frequency, start_date, end_date):
         df = data[[ticker]].copy()
     
     # Resample based on frequency
-    if frequency == "Daily":
-        df_resampled = df
+    # if frequency == "Daily":
+        # df_resampled = df
     elif frequency == "Weekly":
         df_resampled = df.resample('W-MON').mean()
     else:  # Monthly
@@ -113,7 +113,7 @@ def main():
     
     frequency = st.sidebar.selectbox(
         "Investment frequency",
-        ["Daily", "Weekly", "Monthly"]
+        ["Weekly", "Monthly"]
     )
     
     # Fetch data and run analysis
