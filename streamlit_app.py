@@ -184,7 +184,7 @@ def main():
             fig.update_xaxes(tickfont=dict(size=14))
             fig.update_yaxes(tickfont=dict(size=14))
             
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=False)
             
             # Display summary statistics
             st.subheader("Summary Statistics")
