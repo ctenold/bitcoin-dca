@@ -11,14 +11,14 @@ ASSET_MAPPINGS = {
     "MSTR": "MSTR",
     "S&P 500": "^GSPC",
     "Gold": "GC=F",
-    "Cash": "USD"  # Special case - will be handled separately
+    "Cash": "USD"
 }
 
 def fetch_stock_data(tickers, start_date, end_date):
     """Fetch historical stock data using yfinance"""
     data = {}
     for ticker in tickers:
-        if ticker == "USD":  # Handle cash separately
+        if ticker == "USD":
             continue
         try:
             stock = yf.Ticker(ticker)
@@ -30,35 +30,29 @@ def fetch_stock_data(tickers, start_date, end_date):
 
 def calculate_dca(asset, ticker, data, amount, frequency, start_date, end_date):
     """Calculate Dollar Cost Averaging returns"""
-    # Ensure timezone consistency
     tz = pytz.UTC
     start_date = start_date.replace(tzinfo=tz)
     end_date = end_date.replace(tzinfo=tz)
     
-    if ticker == "USD":  # Handle capitalism
+    if ticker == "USD":
         dates = pd.date_range(start=start_date, end=end_date, freq='D', tz=tz)
         df = pd.DataFrame(index=dates)
-        df['USD'] = 1.0  # Cash value remains constant
+        df['USD'] = 1.0
     else:
         df = data[[ticker]].copy()
     
-    # Resample based on frequency
-    # if frequency == "Daily":
-        # df_resampled = df
-    if frequency == "Weekly":
+    if frequency == "Daily":
+        df_resampled = df
+    elif frequency == "Weekly":
         df_resampled = df.resample('W-MON').mean()
     else:  # Monthly
         df_resampled = df.resample('M').mean()
     
-    # Calculate shares bought and total investment
     df_resampled['Shares'] = amount / df_resampled[ticker]
     df_resampled['Cumulative_Shares'] = df_resampled['Shares'].cumsum()
     
-    # Calculate number of periods based on frequency
     time_deltas = (df_resampled.index - start_date).days
-    if frequency == "Daily":
-        df_resampled['Total_Invested'] = amount * time_deltas
-    elif frequency == "Weekly":
+    if frequency == "Weekly":
         df_resampled['Total_Invested'] = amount * (time_deltas // 7)
     else:  # Monthly
         df_resampled['Total_Invested'] = amount * (time_deltas // 30)
@@ -71,7 +65,7 @@ def calculate_dca(asset, ticker, data, amount, frequency, start_date, end_date):
     return df_resampled
 
 def main():
-    st.title("DCA Comparison Tool")
+    st.title("Dollar Cost Averaging Comparison Tool")
     
     # Sidebar configuration
     st.sidebar.header("DCA Parameters")
@@ -80,7 +74,7 @@ def main():
     selected_assets = []
     st.sidebar.subheader("Select Assets")
     for asset in ASSET_MAPPINGS.keys():
-        if st.sidebar.checkbox(asset, value=(asset in ["Bitcoin", "S&P 500"])):
+        if st.sidebar.checkbox(asset, value=(asset in ["Bitcoin", "S&P 500", "USD"])):
             selected_assets.append(asset)
     
     if not selected_assets:
@@ -97,7 +91,6 @@ def main():
     )
     end_date = datetime.now()
     
-    # Convert to datetime objects if they aren't already
     if not isinstance(start_date, datetime):
         start_date = datetime.combine(start_date, datetime.min.time())
     if not isinstance(end_date, datetime):
@@ -116,99 +109,93 @@ def main():
         ["Weekly", "Monthly"]
     )
     
-    # Fetch data and run analysis
-    if st.sidebar.button("Run Analysis"):
-        with st.spinner("Fetching data and calculating..."):
-            tickers = [ASSET_MAPPINGS[asset] for asset in selected_assets]
-            data = fetch_stock_data(tickers, start_date, end_date)
+    # Automatic analysis
+    with st.spinner("Fetching data and calculating..."):
+        tickers = [ASSET_MAPPINGS[asset] for asset in selected_assets]
+        data = fetch_stock_data(tickers, start_date, end_date)
+        
+        if not data.empty or "USD" in tickers:
+            # Calculate DCA for each asset
+            results = {}
+            for asset in selected_assets:
+                ticker = ASSET_MAPPINGS[asset]
+                results[asset] = calculate_dca(
+                    asset, ticker, data, investment_amount, 
+                    frequency, start_date, end_date
+                )
             
-            if not data.empty or "USD" in tickers:
-                # Calculate DCA for each asset
-                results = {}
-                for asset in selected_assets:
-                    ticker = ASSET_MAPPINGS[asset]
-                    results[asset] = calculate_dca(
-                        asset, ticker, data, investment_amount, 
-                        frequency, start_date, end_date
+            # Create visualization
+            fig = go.Figure()
+            
+            for asset, df in results.items():
+                ticker = ASSET_MAPPINGS[asset]
+                fig.add_trace(
+                    go.Scatter(
+                        x=df.index,
+                        y=df['Portfolio_Value'],
+                        name=f"{asset} Value",
+                        hovertemplate=
+                        '<b>%{x}</b><br>' +
+                        f'{asset} Value: $%{{y:.2f}}<br>' +
+                        'Shares: %{customdata:.4f}<br>',
+                        customdata=df['Cumulative_Shares'],
+                        line=dict(width=3)
                     )
-                
-                # Create visualization
-                fig = go.Figure()
-                
-                for asset, df in results.items():
-                    ticker = ASSET_MAPPINGS[asset]
-                    fig.add_trace(
-                        go.Scatter(
-                            x=df.index,
-                            y=df['Portfolio_Value'],
-                            name=f"{asset} Value",
-                            mode='lines',
-                            hovertemplate=
-                            '<b>%{x}</b><br>' +
-                            f'{asset} Value: $%{{y:.2f}}<br>' +
-                            'Shares: %{customdata:.4f}<br>',
-                            customdata=df['Cumulative_Shares']
-                        )
-                    )
-                 # Update layout with larger fonts and size
-                fig.update_layout(
-                    title=dict(
-                        text=f"DCA Comparison ({frequency} ${investment_amount} investments)",
-                        font=dict(size=24)  # Larger title font
-                    ),
-                    xaxis_title=dict(
-                        text="Date",
-                        font=dict(size=18)  # Larger x-axis title
-                    ),
-                    yaxis_title=dict(
-                        text="Value ($)",
-                        font=dict(size=18)  # Larger y-axis title
-                    ),
-                    legend_title=dict(
-                        text="Assets",
-                        font=dict(size=16)  # Larger legend title
-                    ),
-                    legend=dict(
-                        font=dict(size=14)  # Larger legend items
-                    ),
-                    hovermode="x unified",
-                    width=1000,  # Wider plot
-                    height=600,  # Taller plot
-                    font=dict(size=14),  # Base font size for other text
-                    hoverlabel=dict(font_size=14)  # Larger hover text
                 )
-                
-                # Update axes with larger tick fonts
-                fig.update_xaxes(
-                    tickfont=dict(size=14)
-                )
-                fig.update_yaxes(
-                    tickfont=dict(size=14)
-                )
-                
-                st.plotly_chart(fig, use_container_width=True)
-                
-                # Display summary statistics
-                st.subheader("Summary Statistics")
-                summary_data = {}
-                for asset, df in results.items():
-                    final_value = df['Portfolio_Value'].iloc[-1]
-                    total_invested = df['Total_Invested'].iloc[-1]
-                    summary_data[asset] = {
-                        'Final Value': final_value,
-                        'Total Invested': total_invested,
-                        'Gain': final_value - total_invested,
-                        'ROI (%)': ((final_value / total_invested) - 1) * 100
-                    }
-                
-                st.dataframe(
-                    pd.DataFrame(summary_data).T.style.format({
-                        'Final Value': '${:,.2f}',
-                        'Total Invested': '${:,.2f}',
-                        'Gain': '${:,.2f}',
-                        'ROI (%)': '{:.2f}%'
-                    })
-                )
+            
+            fig.update_layout(
+                title=dict(
+                    text=f"DCA Comparison ({frequency} ${investment_amount} investments)",
+                    font=dict(size=24)
+                ),
+                xaxis_title=dict(
+                    text="Date",
+                    font=dict(size=18)
+                ),
+                yaxis_title=dict(
+                    text="Value ($)",
+                    font=dict(size=18)
+                ),
+                legend_title=dict(
+                    text="Assets",
+                    font=dict(size=16)
+                ),
+                legend=dict(
+                    font=dict(size=14)
+                ),
+                hovermode="x unified",
+                width=1000,
+                height=600,
+                font=dict(size=14),
+                hoverlabel=dict(font_size=14)
+            )
+            
+            fig.update_xaxes(tickfont=dict(size=14))
+            fig.update_yaxes(tickfont=dict(size=14))
+            
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Display summary statistics
+            st.subheader("Summary Statistics")
+            summary_data = {}
+            for asset, df in results.items():
+                final_value = df['Portfolio_Value'].iloc[-1]
+                total_invested = df['Total_Invested'].iloc[-1]
+                summary_data[asset] = {
+                    'Final Value': final_value,
+                    'Total Invested': total_invested,
+                    'Gain': final_value - total_invested,
+                    'ROI (%)': ((final_value / total_invested) - 1) * 100
+                }
+            
+            st.dataframe(
+                pd.DataFrame(summary_data).T.style.format({
+                    'Final Value': '${:,.2f}',
+                    'Total Invested': '${:,.2f}',
+                    'Gain': '${:,.2f}',
+                    'ROI (%)': '{:.2f}%'
+                })
+            )
 
 if __name__ == "__main__":
     main()
