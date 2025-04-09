@@ -172,6 +172,13 @@ def main():
                     font=dict(size=16)
                 ),
                 legend=dict(
+                    x=0.01,
+                    y=0.99,
+                    xanchor='left',
+                    yanchor='top',
+                    bgcolor='rgba(0,0,0,0)',  # transparent background
+                    bordercolor='rgba(255,255,255,0.2)',
+                    borderwidth=1,
                     font=dict(size=14)
                 ),
                 hovermode="x unified",
@@ -183,17 +190,6 @@ def main():
             
             fig.update_xaxes(tickfont=dict(size=14))
             fig.update_yaxes(tickfont=dict(size=14))
-            fig.update_layout(
-                legend=dict(
-                    x=0.01,
-                    y=0.99,
-                    xanchor='left',
-                    yanchor='top',
-                    bgcolor='rgba(0,0,0,0)',  # transparent background
-                    bordercolor='rgba(255,255,255,0.2)',
-                    borderwidth=1
-                )
-            )
             
             st.plotly_chart(fig, use_container_width=False)
             
