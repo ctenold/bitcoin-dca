@@ -3,7 +3,7 @@ import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
-import pandas as pd
+import pytz
 
 # Asset mappings to their respective tickers
 ASSET_MAPPINGS = {
@@ -30,10 +30,14 @@ def fetch_stock_data(tickers, start_date, end_date):
 
 def calculate_dca(asset, ticker, data, amount, frequency, start_date, end_date):
     """Calculate Dollar Cost Averaging returns"""
-    if ticker == "USD":  # Handle cash
-        dates = pd.date_range(start=start_date, end=end_date, freq='D')
+    # Ensure timezone consistency
+    tz = pytz.UTC
+    start_date = start_date.replace(tzinfo=tz)
+    end_date = end_date.replace(tzinfo=tz)
+    
+    if ticker == "USD":  # Handle capitalism
+        dates = pd.date_range(start=start_date, end=end_date, freq='D', tz=tz)
         df = pd.DataFrame(index=dates)
-        periods = {'Daily': 1, 'Weekly': 7, 'Monthly': 30}
         df['USD'] = 1.0  # Cash value remains constant
     else:
         df = data[[ticker]].copy()
@@ -46,20 +50,18 @@ def calculate_dca(asset, ticker, data, amount, frequency, start_date, end_date):
     else:  # Monthly
         df_resampled = df.resample('M').mean()
     
-    # Convert start_date to pandas Timestamp for consistent subtraction
-    start_date_ts = pd.Timestamp(start_date)
-    
     # Calculate shares bought and total investment
     df_resampled['Shares'] = amount / df_resampled[ticker]
     df_resampled['Cumulative_Shares'] = df_resampled['Shares'].cumsum()
     
     # Calculate number of periods based on frequency
+    time_deltas = (df_resampled.index - start_date).days
     if frequency == "Daily":
-        df_resampled['Total_Invested'] = amount * (df_resampled.index - start_date_ts).days
+        df_resampled['Total_Invested'] = amount * time_deltas
     elif frequency == "Weekly":
-        df_resampled['Total_Invested'] = amount * ((df_resampled.index - start_date_ts).days // 7)
+        df_resampled['Total_Invested'] = amount * (time_deltas // 7)
     else:  # Monthly
-        df_resampled['Total_Invested'] = amount * (((df_resampled.index - start_date_ts).days) // 30)
+        df_resampled['Total_Invested'] = amount * (time_deltas // 30)
     
     df_resampled['Portfolio_Value'] = (
         df_resampled['Cumulative_Shares'] if ticker == "USD" 
@@ -95,6 +97,12 @@ def main():
     )
     end_date = datetime.now()
     
+    # Convert to datetime objects if they aren't already
+    if not isinstance(start_date, datetime):
+        start_date = datetime.combine(start_date, datetime.min.time())
+    if not isinstance(end_date, datetime):
+        end_date = datetime.combine(end_date, datetime.min.time())
+    
     # Investment parameters
     investment_amount = st.sidebar.number_input(
         "Investment amount per period ($)", 
@@ -121,7 +129,7 @@ def main():
                     ticker = ASSET_MAPPINGS[asset]
                     results[asset] = calculate_dca(
                         asset, ticker, data, investment_amount, 
-                        frequency, start_date, end_date
+                        frequency, start робота_date, end_date
                     )
                 
                 # Create visualization
@@ -136,52 +144,4 @@ def main():
                             name=f"{asset} Value",
                             hovertemplate=
                             '<b>%{x}</b><br>' +
-                            f'{asset} Value: $%{{y:.2f}}<br>' +
-                            'Shares: %{customdata:.4f}<br>',
-                            customdata=df['Cumulative_Shares']
-                        )
-                    )
-                    fig.add_trace(
-                        go.Scatter(
-                            x=df.index,
-                            y=df['Total_Invested'],
-                            name=f"{asset} Invested",
-                            line=dict(dash='dash'),
-                            opacity=0.5
-                        )
-                    )
-                
-                fig.update_layout(
-                    title=f"DCA Comparison ({frequency} ${investment_amount} investments)",
-                    xaxis_title="Date",
-                    yaxis_title="Value ($)",
-                    legend_title="Assets",
-                    hovermode="x unified"
-                )
-                
-                st.plotly_chart(fig, use_container_width=True)
-                
-                # Display summary statistics
-                st.subheader("Summary Statistics")
-                summary_data = {}
-                for asset, df in results.items():
-                    final_value = df['Portfolio_Value'].iloc[-1]
-                    total_invested = df['Total_Invested'].iloc[-1]
-                    summary_data[asset] = {
-                        'Final Value': final_value,
-                        'Total Invested': total_invested,
-                        'Gain': final_value - total_invested,
-                        'ROI (%)': ((final_value / total_invested) - 1) * 100
-                    }
-                
-                st.dataframe(
-                    pd.DataFrame(summary_data).T.style.format({
-                        'Final Value': '${:,.2f}',
-                        'Total Invested': '${:,.2f}',
-                        'Gain': '${:,.2f}',
-                        'ROI (%)': '{:.2f}%'
-                    })
-                )
-
-if __name__ == "__main__":
-    main()
+                            f'{asset}
