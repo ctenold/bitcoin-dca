@@ -142,7 +142,7 @@ def main():
                             x=df.index,
                             y=df['Portfolio_Value'],
                             name=f"{asset} Value",
-                            mode='lines'
+                            mode='lines',
                             hovertemplate=
                             '<b>%{x}</b><br>' +
                             f'{asset} Value: $%{{y:.2f}}<br>' +
