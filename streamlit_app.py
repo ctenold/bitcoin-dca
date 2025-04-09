@@ -74,7 +74,7 @@ def main():
     selected_assets = []
     st.sidebar.subheader("Select Assets")
     for asset in ASSET_MAPPINGS.keys():
-        if st.sidebar.checkbox(asset, value=(asset in ["Bitcoin", "S&P 500", "USD"])):
+        if st.sidebar.checkbox(asset, value=(asset in ["Bitcoin", "S&P 500", "Cash"])):
             selected_assets.append(asset)
     
     if not selected_assets:
