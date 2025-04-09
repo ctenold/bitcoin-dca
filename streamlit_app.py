@@ -11,7 +11,20 @@ ASSET_MAPPINGS = {
     "MSTR": "MSTR",
     "S&P 500": "^GSPC",
     "Gold": "GC=F",
-    "Cash": "USD"
+    "Cash": "USD",
+    # Indian Stock Market
+    "NIFTY 50": "^NSEI",  # Primary index for the National Stock Exchange of India
+    # Canada
+    "S&P/TSX Composite": "^GSPTSE",  # Main index for the Toronto Stock Exchange
+    # Hong Kong
+    "Hang Seng Index": "^HSI",  # Key index for the Hong Kong Stock Exchange
+    # China
+    "Shanghai Composite": "^SSEC",  # Main index for the Shanghai Stock Exchange
+    # Korea
+    "KOSPI": "^KS11",  # Korea Composite Stock Price Index
+    # US (Russell)
+    "Russell 2000": "^RUT",  # Small-cap index (direct index ticker)
+    "Russell 1000": "^RUI"  # Large-cap index (direct index ticker)
 }
 
 def fetch_stock_data(tickers, start_date, end_date):
@@ -73,7 +86,7 @@ def main():
     selected_assets = []
     st.sidebar.subheader("Select Assets")
     for asset in ASSET_MAPPINGS.keys():
-        if st.sidebar.checkbox(asset, value=(asset in ["Bitcoin", "S&P 500", "USD"])):
+        if st.sidebar.checkbox(asset, value=(asset in ["Bitcoin", "S&P 500", "Cash"])):
             selected_assets.append(asset)
     
     if not selected_assets:
