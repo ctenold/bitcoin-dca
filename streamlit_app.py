@@ -4,7 +4,6 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import streamlit.components.v1 as components
-from streamlit_extras.badges import badge
 import pytz
 
 html_code = """
@@ -229,7 +228,6 @@ def main():
                 })
             )
             components.html(html_code, height=350)
-            badge(type="twitter", name="ColeTenold")
 
 if __name__ == "__main__":
     main()
