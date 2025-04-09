@@ -4,7 +4,6 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import pytz
-import numpy as np
 
 # Asset mappings to their respective tickers
 ASSET_MAPPINGS = {
@@ -36,44 +35,27 @@ def calculate_dca(asset, ticker, data, amount, frequency, start_date, end_date):
     end_date = end_date.replace(tzinfo=tz)
     
     if ticker == "USD":
-        # For cash, create dates based on frequency directly
-        if frequency == "Daily":
-            dates = pd.date_range(start=start_date, end=end_date, freq='D', tz=tz)
-        elif frequency == "Weekly":
-            dates = pd.date_range(start=start_date, end=end_date, freq='W-MON', tz=tz)
-        else:  # Monthly
-            dates = pd.date_range(start=start_date, end=end_date, freq='M', tz=tz)
+        dates = pd.date_range(start=start_date, end=end_date, freq='D', tz=tz)
         df = pd.DataFrame(index=dates)
         df['USD'] = 1.0
     else:
         df = data[[ticker]].copy()
     
-    # Resample based on frequency (for non-cash assets)
-    if ticker != "USD":
-        if frequency == "Daily":
-            df_resampled = df
-        elif frequency == "Weekly":
-            df_resampled = df.resample('W-MON').mean()
-        else:  # Monthly
-            df_resampled = df.resample('M').mean()
-    else:
+    if frequency == "Daily":
         df_resampled = df
+    elif frequency == "Weekly":
+        df_resampled = df.resample('W-MON').mean()
+    else:  # Monthly
+        df_resampled = df.resample('M').mean()
     
-    # Calculate shares bought and total investment
     df_resampled['Shares'] = amount / df_resampled[ticker]
     df_resampled['Cumulative_Shares'] = df_resampled['Shares'].cumsum()
     
-    # For cash, Total_Invested should exactly match the number of periods * amount
-    if ticker == "USD":
-        # Use the length of the DataFrame to determine number of periods
-        periods = np.arange(1, len(df_resampled) + 1)
-        df_resampled['Total_Invested'] = amount * periods
-    else:
-        time_deltas = (df_resampled.index - start_date).days
-        if frequency == "Weekly":
-            df_resampled['Total_Invested'] = amount * (time_deltas // 7)
-        else:  # Monthly
-            df_resampled['Total_Invested'] = amount * (time_deltas // 30)
+    time_deltas = (df_resampled.index - start_date).days
+    if frequency == "Weekly":
+        df_resampled['Total_Invested'] = amount * (time_deltas // 7)
+    else:  # Monthly
+        df_resampled['Total_Invested'] = amount * (time_deltas // 30)
     
     df_resampled['Portfolio_Value'] = (
         df_resampled['Cumulative_Shares'] if ticker == "USD" 
@@ -83,7 +65,7 @@ def calculate_dca(asset, ticker, data, amount, frequency, start_date, end_date):
     return df_resampled
 
 def main():
-    st.title("DCA Comparison Tool")
+    st.title("Dollar Cost Averaging Comparison Tool")
     
     # Sidebar configuration
     st.sidebar.header("DCA Parameters")
@@ -92,7 +74,7 @@ def main():
     selected_assets = []
     st.sidebar.subheader("Select Assets")
     for asset in ASSET_MAPPINGS.keys():
-        if st.sidebar.checkbox(asset, value=(asset in ["Bitcoin", "S&P 500", "Cash"])):
+        if st.sidebar.checkbox(asset, value=(asset in ["Bitcoin", "S&P 500", "USD"])):
             selected_assets.append(asset)
     
     if not selected_assets:
@@ -160,15 +142,6 @@ def main():
                         line=dict(width=3)
                     )
                 )
-                fig.add_trace(
-                    go.Scatter(
-                        x=df.index,
-                        y=df['Total_Invested'],
-                        name=f"{asset} Invested",
-                        line=dict(dash='dash', width=3),
-                        opacity=0.5
-                    )
-                )
             
             fig.update_layout(
                 title=dict(
@@ -206,14 +179,13 @@ def main():
             st.subheader("Summary Statistics")
             summary_data = {}
             for asset, df in results.items():
-                ticker = ASSET_MAPPINGS[asset]
                 final_value = df['Portfolio_Value'].iloc[-1]
                 total_invested = df['Total_Invested'].iloc[-1]
                 summary_data[asset] = {
                     'Final Value': final_value,
                     'Total Invested': total_invested,
                     'Gain': final_value - total_invested,
-                    'ROI (%)': ((final_value / total_invested) - 1) * 100 if ticker != "USD" else 0.0
+                    'ROI (%)': ((final_value / total_invested) - 1) * 100
                 }
             
             st.dataframe(
