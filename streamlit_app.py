@@ -3,8 +3,21 @@ import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
+import streamlit.components.v1 as components
 import pytz
 
+html_code = """
+<lightning-widget
+    name="Support Value For Value"
+    accent="#0E1117"
+    to="ctenold@coinos.io"
+    image="https://flyclipart.com/thumb2/bitcoin-logos-brands-and-logotypes-553473.png"
+    amounts="1000,5000,10000"
+    labels="1000👍,5000⭐🙏,10000🔥🚀👑"
+/>
+
+<script src="https://embed.twentyuno.net/js/app.js"></script>
+"""
 # Asset mappings to their respective tickers
 ASSET_MAPPINGS = {
     "Bitcoin": "BTC-USD",
@@ -214,6 +227,7 @@ def main():
                     'ROI (%)': '{:.2f}%'
                 })
             )
+            components.html(html_code, height=350)
 
 if __name__ == "__main__":
     main()
