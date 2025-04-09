@@ -3,6 +3,7 @@ import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
+import pandas as pd
 
 # Asset mappings to their respective tickers
 ASSET_MAPPINGS = {
@@ -45,13 +46,21 @@ def calculate_dca(asset, ticker, data, amount, frequency, start_date, end_date):
     else:  # Monthly
         df_resampled = df.resample('M').mean()
     
-    # Calculate sharesを買った and total investment
+    # Convert start_date to pandas Timestamp for consistent subtraction
+    start_date_ts = pd.Timestamp(start_date)
+    
+    # Calculate shares bought and total investment
     df_resampled['Shares'] = amount / df_resampled[ticker]
     df_resampled['Cumulative_Shares'] = df_resampled['Shares'].cumsum()
-    df_resampled['Total_Invested'] = amount * (
-        len(df_resampled) if ticker == "USD" else 
-        (df_resampled.index - start_date).days / (1 if frequency == "Daily" else 7 if frequency == "Weekly" else 30)
-    )
+    
+    # Calculate number of periods based on frequency
+    if frequency == "Daily":
+        df_resampled['Total_Invested'] = amount * (df_resampled.index - start_date_ts).days
+    elif frequency == "Weekly":
+        df_resampled['Total_Invested'] = amount * ((df_resampled.index - start_date_ts).days // 7)
+    else:  # Monthly
+        df_resampled['Total_Invested'] = amount * (((df_resampled.index - start_date_ts).days) // 30)
+    
     df_resampled['Portfolio_Value'] = (
         df_resampled['Cumulative_Shares'] if ticker == "USD" 
         else df_resampled['Cumulative_Shares'] * df_resampled[ticker]
