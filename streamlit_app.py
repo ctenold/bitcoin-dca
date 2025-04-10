@@ -24,6 +24,7 @@ ASSET_MAPPINGS = {
     "MSTR": "MSTR",
     "S&P 500": "^GSPC",
     "Gold": "GC=F",
+    "BRK-A": "BRK-A",
     "Cash": "USD",
     # Indian Stock Market
     # "NIFTY 50": "^NSEI",  # Primary index for the National Stock Exchange of India
