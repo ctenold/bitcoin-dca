@@ -26,6 +26,7 @@ ASSET_MAPPINGS = {
     "Gold": "GC=F",
     "BRK-A": "BRK-A",
     "Cash": "USD",
+    "AAPL": "AAPL",
     # Indian Stock Market
     # "NIFTY 50": "^NSEI",  # Primary index for the National Stock Exchange of India
     # Canada
